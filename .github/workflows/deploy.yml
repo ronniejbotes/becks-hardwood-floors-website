@@ -1,9 +1,18 @@
-name: Build and deploy to Hostinger
+name: Deploy to Hostinger over FTP (alternative)
 
+# ALTERNATIVE to publish-deploy-branch.yml. Use one or the other, not both.
+#
+#   publish-deploy-branch.yml  builds -> pushes to `deploy` -> you click Deploy
+#                              in hPanel. This is the one currently in use.
+#   this workflow              builds -> uploads straight to public_html over
+#                              FTP, fully automatic, no hPanel click.
+#
+# Manual-trigger only, because it would fail on every push until FTP_SERVER,
+# FTP_USERNAME and FTP_PASSWORD are set. To switch to this method, add those
+# three secrets and uncomment the `push:` trigger below.
 on:
-  push:
-    branches: [main]
-  # Lets you re-deploy from the Actions tab without pushing a commit.
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 
 # Never let two deploys upload over each other.
@@ -26,8 +35,11 @@ jobs:
 
       - name: Build
         env:
-          # Set under Settings -> Secrets and variables -> Actions.
-          # Without it the built form disables itself and says so, rather than
+          # Same variables as publish-deploy-branch.yml — see the long note
+          # there. Safe defaults: temp domain, indexing off.
+          VITE_SITE_URL: ${{ vars.SITE_URL || 'https://lightcyan-curlew-520407.hostingersite.com' }}
+          VITE_NOINDEX: ${{ vars.NOINDEX || '1' }}
+          # Without this the form disables itself and says so, rather than
           # silently dropping enquiries.
           VITE_W3F_KEY: ${{ secrets.VITE_W3F_KEY }}
         run: npm run build

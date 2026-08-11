@@ -114,45 +114,79 @@ with no form at all.
 
 ## Deploying to Hostinger
 
-The build output is static files. Two options.
+Hostinger's Git integration **clones a branch and serves it — it never runs a
+build.** Pointing it at `main` would fill `public_html` with TypeScript and no
+`index.html`. So the repo keeps a second branch, `deploy`, containing the built
+site at its root, and a workflow that regenerates it.
 
-### Option A — GitHub Actions, automatic on push (recommended)
-
-`.github/workflows/deploy.yml` builds and uploads `dist/` over FTP on every push
-to `main`. Add these repository secrets under
-**Settings → Secrets and variables → Actions**:
-
-| Secret | Where to find it in hPanel |
-|---|---|
-| `FTP_SERVER` | Files → FTP Accounts → *FTP hostname* (e.g. `ftp.yourdomain.com`) |
-| `FTP_USERNAME` | Files → FTP Accounts |
-| `FTP_PASSWORD` | Files → FTP Accounts (set/reset it there) |
-| `VITE_W3F_KEY` | Your Web3Forms key |
-
-The workflow uploads into `public_html/`. Change `server-dir` if the domain is
-on an addon domain rather than the primary one.
-
-### Option B — manual upload
-
-```bash
-npm run build
+```
+main ──push──> GitHub Action builds ──force-push──> deploy ──Hostinger pulls──> public_html
 ```
 
-Upload **the contents of `dist/`** (not the folder itself) into `public_html/`
-via hPanel's File Manager or any FTP client. Include the hidden `.htaccess`.
+### One-time setup
 
-### After the first deploy
+The repo is **private**, so Hostinger authenticates over SSH.
 
-1. **Check `.htaccess` uploaded.** File managers hide dotfiles by default. It
-   handles HTTPS, the www/non-www redirect, caching and the 404 page. Without
-   it the site works but leaks duplicate URLs.
-2. **Pick www or non-www and stick to it.** `.htaccess` currently forces
-   **non-www**. Both variants indexed as separate sites is a real and common
-   own goal.
-3. **Update the domain** in two places if it is not
-   `beckshardwoodfloors.com` — `src/site.config.ts` (`url`) and
-   `scripts/generate-sitemap.mjs` (`SITE_URL`). Then rebuild, or every canonical
-   tag and sitemap entry will point at the wrong host.
+1. **hPanel → Advanced → GIT**, copy the SSH key from *Private Git Repository*.
+2. **GitHub → repo → Settings → Deploy keys → Add deploy key.** Paste it, title
+   it "Hostinger", leave *Allow write access* **unchecked**. Read-only is all it
+   needs, and a read-only key cannot damage the repo if the host is ever
+   compromised.
+3. **Empty `public_html`.** Hostinger refuses to deploy into a non-empty
+   directory, and it ships a placeholder `index.html` / `default.php`.
+4. Back on the GIT page, *Create a New Repository*:
+
+   | Field | Value |
+   |---|---|
+   | Repository | `git@github.com:ronniejbotes/becks-hardwood-floors-website.git` |
+   | Branch | `deploy` |
+   | Directory | *(leave blank — deploys to `public_html`)* |
+
+   The SSH form of the URL is required. The HTTPS form only works for public
+   repos.
+5. Click **Create**, then **Deploy**.
+
+### After that
+
+Push to `main` → the Action rebuilds and updates `deploy` (~1 min) → click
+**Deploy** in hPanel. Hostinger also shows a webhook URL on that page; add it to
+GitHub under Settings → Webhooks to skip the click entirely.
+
+### Choosing the domain and indexing state
+
+Both are repository variables — **Settings → Secrets and variables → Actions →
+Variables**:
+
+| Variable | Default | Set it to |
+|---|---|---|
+| `SITE_URL` | `https://lightcyan-curlew-520407.hostingersite.com` | The origin the site is actually served from |
+| `NOINDEX` | `1` | `0` once it is on the real domain and ready to rank |
+
+`SITE_URL` drives every canonical tag, `og:url` and schema `@id`, so a wrong
+value points the whole site at a host it is not on.
+
+The defaults are deliberately the safe ones — temp domain, indexing **off**. A
+site that is not indexed is fixable in a minute. An unsold client's demo, using
+AI placeholder photography, indexed under a throwaway subdomain and competing
+with the real site later, is not.
+
+**Going live checklist:** set `SITE_URL` to the real domain, set `NOINDEX` to
+`0`, push, deploy, then submit the sitemap in Search Console.
+
+### Alternative: FTP
+
+`.github/workflows/deploy.yml` uploads `dist/` straight to `public_html` over
+FTP, with no hPanel click. It is **manual-trigger only** until you add
+`FTP_SERVER`, `FTP_USERNAME` and `FTP_PASSWORD` (hPanel → Files → FTP Accounts)
+and uncomment its `push:` trigger. Use one method or the other, not both.
+
+### Local preview build
+
+```bash
+npm run build:preview -- https://some-temp-domain.hostingersite.com
+```
+
+Same output the Action produces: canonicals on that host, indexing blocked.
 
 ---
 

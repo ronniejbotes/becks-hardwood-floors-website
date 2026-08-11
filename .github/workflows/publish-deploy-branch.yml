@@ -1,0 +1,102 @@
+name: Publish built site to deploy branch
+
+# Hostinger's Git integration clones a branch and serves it — it never runs a
+# build. So `main` (source) is useless to it. This workflow builds the site and
+# force-pushes the CONTENTS of dist/ to the `deploy` branch, which is what
+# Hostinger is pointed at. Push to main, wait ~1 min, click Deploy in hPanel.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: publish-deploy-branch
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to push the deploy branch back to this repo.
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        env:
+          # Configure under Settings -> Secrets and variables -> Actions -> Variables.
+          #
+          # SITE_URL  the origin the site will actually be served from. Canonical
+          #           tags, og:url and schema @ids are built from it, so a wrong
+          #           value here points every canonical at the wrong host.
+          # NOINDEX   '1' blocks indexing (noindex meta + X-Robots-Tag, no
+          #           sitemap). '0' allows it.
+          #
+          # Defaults are deliberately the SAFE ones: the Hostinger temp domain,
+          # indexing OFF. Worst case on a misconfiguration is a site that is not
+          # indexed, which is trivially fixable. The opposite mistake — an unsold
+          # client's demo, full of placeholder photography, indexed under a
+          # throwaway subdomain — is not.
+          #
+          # GOING LIVE: set SITE_URL to the real domain and NOINDEX to 0.
+          VITE_SITE_URL: ${{ vars.SITE_URL || 'https://lightcyan-curlew-520407.hostingersite.com' }}
+          VITE_NOINDEX: ${{ vars.NOINDEX || '1' }}
+          VITE_W3F_KEY: ${{ secrets.VITE_W3F_KEY }}
+        run: npm run build
+
+      - name: Sanity-check the build before publishing it
+        run: |
+          test -f dist/index.html      || { echo "::error::dist/index.html missing"; exit 1; }
+          test -f dist/.htaccess       || { echo "::error::.htaccess missing — Apache config would be lost"; exit 1; }
+          test -f dist/404.html        || { echo "::error::404.html missing"; exit 1; }
+          for p in refinishing installation luxury-vinyl-plank repair gallery about contact; do
+            test -f "dist/$p/index.html" || { echo "::error::dist/$p/index.html missing"; exit 1; }
+          done
+          echo "Canonical origin in the built output:"
+          grep -o 'rel="canonical" href="[^"]*"' dist/index.html
+          echo "Indexing directive:"
+          grep -o 'name="robots" content="[^"]*"' dist/index.html || echo "  (none — page is indexable)"
+
+      - name: Force-push dist/ to the deploy branch
+        run: |
+          # .vite holds build metadata that must not be served.
+          rm -rf dist/.vite
+
+          cat > dist/README.md <<'EOF'
+          # deploy branch — BUILD OUTPUT ONLY. DO NOT EDIT.
+
+          Generated automatically from `main` by
+          .github/workflows/publish-deploy-branch.yml. Anything committed here
+          by hand is destroyed on the next build.
+
+          Source code lives on `main`.
+          EOF
+
+          cd dist
+          git init -q -b deploy
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Build ${GITHUB_SHA::7} from main
+
+          Source commit: ${GITHUB_SHA}
+          Built: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push -q --force \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" \
+            deploy:deploy
+          echo "Pushed $(git ls-files | wc -l) files to the deploy branch."
+
+      - name: Next step
+        run: |
+          echo "### Built and pushed to \`deploy\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Now click **Deploy** on the GIT page in Hostinger hPanel to pull it." >> $GITHUB_STEP_SUMMARY
