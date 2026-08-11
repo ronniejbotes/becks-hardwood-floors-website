@@ -3,9 +3,9 @@
 Marketing site for Beck's Hardwood Floors, a hardwood flooring contractor in
 Winston-Salem, North Carolina. Owner: Travis Beck. Phone: (336) 764-2395.
 
-**Status: pre-sale demo. Not sold to the client yet. Read
-[§ Before this goes live](#before-this-goes-live) before publishing it anywhere
-public.**
+**Status: in development. The imagery is placeholder and several business
+details are still unconfirmed — read [§ Before this goes live](#before-this-goes-live)
+before treating this as finished.**
 
 React + TypeScript + Tailwind + Framer Motion, prerendered to static HTML with
 `vite-react-ssg`. Deploys as plain files to Hostinger — no server, no database.
@@ -34,62 +34,26 @@ npm run preview          # serve the built site
 
 ## Before this goes live
 
-Nothing on this site is invented, but several things are **unconfirmed** and a
-few are **placeholders**. Work through this list with Travis first.
+There is a handover checklist covering unconfirmed business facts, claims that
+must never appear on the site, and the placeholder imagery that has to be
+swapped out. It is kept **out of this repository on purpose** — this repo is
+public so Hostinger can deploy from it, and those notes concern a prospect who
+has not seen them.
 
-### 1. Replace the imagery — it is AI-generated
+See `HANDOVER.local.md` (gitignored, local only) or the team drive.
 
-Every photograph on the site is AI-generated. None of it is Travis's work. It
-is labelled on-page as illustration wherever it could be mistaken for a real
-job, but **it must be replaced with his real photos before the site is public**.
+The short version, for anyone touching the code:
 
-```
-media-src/     <- drop his real photos here
-node scripts/optimize-media.mjs
-```
-
-Then:
-- `src/content/gallery.ts` — set `isIllustration = false`, rewrite captions
-- `src/content/home.ts` — drop `illustration: true` from the before/after items
-
-The optimizer strips EXIF, which matters: **phone photos carry GPS coordinates
-of customers' houses.** Never publish a raw phone photo.
-
-The before/after feature needs a matched pair per job — same room, same camera
-position, one before and one after. If Travis has those, they slot straight in.
-The "magic install" clips are stylised visualisations and can stay or go.
-
-### 2. Confirm these facts with Travis
-
-| Item | Status | Why it matters |
-|---|---|---|
-| **Founding year** | ⚠️ Sources disagree by ~20 years | BBB says business started 2009. Manta says "37 years" (≈1989). His own 2011 website said "over 20 years" (≤1991). The site currently makes **no** "since YYYY" claim. If he really has been trading since the late 80s that is a much stronger selling point than 2009 — worth asking. |
-| **"Fully insured"** | ⚠️ Not on the site | The only source is his own 2011 website — 15 years stale. Get a current certificate of insurance, then add it. Strong trust signal once evidenced. |
-| **Repair service** | ⚠️ No public evidence | Installation, sanding/refinishing and LVP are all evidenced. Board repair is a normal part of the trade and has real search demand, so `/repair/` was built — but confirm he actually wants the work before it goes public. |
-| **Name spelling** | ⚠️ Two forms in use | He uses "Becks Hardwood Floors" (no apostrophe) on Facebook and BBB. Google Maps, Blue Book and Birdeye use "Beck's". The site uses **"Beck's"** to match the Google Business Profile, which is the ranking surface. Pick one and make Facebook and BBB match. |
-| **Email address** | ⚠️ None published | Not on any source. `beckshardwoodfloors@gmail.com` appears only in Google's AI summaries and could not be verified — do not use it without asking. |
-| **Service area** | Reasonable, unconfirmed | Nine towns listed in `src/site.config.ts`. Confirm he actually travels to all of them. |
-| **Hours** | ✅ Verified | Mon–Fri 8–5, closed weekends. |
-| **Address** | ✅ Verified | 12133 NC Hwy 150 N, **Suite G**. It is an office in a shared building, **not a showroom** — the copy says so deliberately. |
-
-### 3. Never put these on the site
-
-- **"BBB A+ rated" or "BBB accredited"** — flatly false. Google's AI summaries
-  claim it; the actual BBB profile says *"Not Rated — BBB does not have
-  sufficient information to issue a rating"* and he is **not** accredited. This
-  is the single most checkable lie available here, so it must not appear.
-- **Any invented testimonial.** The three on the site are quoted word for word
-  from real published reviews. He also has a **1-star review**, and the site
-  links to the page that shows it. That is deliberate — cherry-picking in the
-  dark is what gets caught.
-- **`aggregateRating` or `review` structured data.** Google's rule: a business
-  marking up reviews about itself makes its pages *ineligible for the star
-  review feature*. Stars come from the Google Business Profile, never from
-  markup on your own domain. See the header comment in `src/lib/schema.ts`.
-- **A specific price.** No figure appears anywhere. Add one only when Travis
-  gives you real numbers, and date it.
-
----
+- **Every image is AI-generated placeholder.** Replace with real photos before
+  this is shown as finished work. Drop them in `media-src/`, run
+  `node scripts/optimize-media.mjs`, then set `isIllustration = false` in
+  `src/content/gallery.ts` and remove `illustration: true` from
+  `src/content/home.ts`.
+- **Do not add claims to `src/site.config.ts` without a source.** The comments
+  in that file record where every published fact came from and which ones are
+  still unverified. Read them before editing.
+- **Never add `aggregateRating` or `review` structured data.** See the header
+  comment in `src/lib/schema.ts` for why.
 
 ## Contact form
 
@@ -166,9 +130,9 @@ Variables**:
 value points the whole site at a host it is not on.
 
 The defaults are deliberately the safe ones — temp domain, indexing **off**. A
-site that is not indexed is fixable in a minute. An unsold client's demo, using
-AI placeholder photography, indexed under a throwaway subdomain and competing
-with the real site later, is not.
+site that is not indexed is fixable in a minute. A staging copy full of
+placeholder photography, indexed under a throwaway subdomain and competing with
+the real site later, is not.
 
 **Going live checklist:** set `SITE_URL` to the real domain, set `NOINDEX` to
 `0`, push, deploy, then submit the sitemap in Search Console.

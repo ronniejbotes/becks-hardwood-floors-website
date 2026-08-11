@@ -65,11 +65,11 @@ export const site = {
   /**
    * When true every page emits `noindex, nofollow` and no sitemap is written.
    *
-   * This is not optional housekeeping for a preview build. A demo site for an
-   * unsold client, indexed on a hostingersite.com subdomain, means: a duplicate
-   * of the real site competing with it later, a client's business name ranking
-   * on a URL nobody controls long-term, and AI-generated placeholder photos
-   * publicly attributed to a real contractor. Keep it on for every preview.
+   * This is not optional housekeeping for a preview build. A staging copy
+   * indexed on a hostingersite.com subdomain means a duplicate of the real site
+   * competing with it later, the business name ranking on a throwaway URL, and
+   * placeholder photography indexed as if it were finished work. Keep it on for
+   * every preview.
    */
   noindex: import.meta.env?.VITE_NOINDEX === '1',
 

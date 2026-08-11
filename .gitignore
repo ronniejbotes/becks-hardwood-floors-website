@@ -25,3 +25,7 @@ media-src/
 # Preview build output + upload bundle (regenerate with `npm run build:preview`)
 dist-preview/
 becks-preview.zip
+
+# Internal handover notes. The repo is PUBLIC (required for Hostinger's Git
+# deploy), and these notes discuss an unsold prospect candidly. Keep them local.
+HANDOVER.local.md

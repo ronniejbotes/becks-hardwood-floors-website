@@ -41,11 +41,11 @@ jobs:
           # NOINDEX   '1' blocks indexing (noindex meta + X-Robots-Tag, no
           #           sitemap). '0' allows it.
           #
-          # Defaults are deliberately the SAFE ones: the Hostinger temp domain,
+          # Defaults are deliberately the SAFE ones: the staging domain,
           # indexing OFF. Worst case on a misconfiguration is a site that is not
-          # indexed, which is trivially fixable. The opposite mistake — an unsold
-          # client's demo, full of placeholder photography, indexed under a
-          # throwaway subdomain — is not.
+          # indexed, which is trivially fixable. The opposite mistake — a staging
+          # copy full of placeholder photography, indexed under a throwaway
+          # subdomain — is not.
           #
           # GOING LIVE: set SITE_URL to the real domain and NOINDEX to 0.
           VITE_SITE_URL: ${{ vars.SITE_URL || 'https://lightcyan-curlew-520407.hostingersite.com' }}

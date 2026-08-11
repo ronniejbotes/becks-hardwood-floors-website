@@ -11,9 +11,8 @@
  *     how you end up with the preview competing with the real site later.
  *
  *  2. Indexing is blocked — noindex meta on every page, an X-Robots-Tag header,
- *     and no sitemap. This is a demo for a business that has not bought the
- *     site yet, using AI-generated placeholder photography. It must not end up
- *     in Google attributed to a real contractor.
+ *     and no sitemap. Staging carries placeholder photography and unconfirmed
+ *     copy, so it must not be indexed as if it were the finished site.
  *
  * Written as a script rather than an inline env var because `VAR=x npm run …`
  * does not work in cmd.exe, and this repo is developed on Windows.
