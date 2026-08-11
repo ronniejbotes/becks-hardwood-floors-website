@@ -16,6 +16,7 @@ import {
   readdirSync,
   statSync,
   writeFileSync,
+  readFileSync,
   existsSync,
   copyFileSync,
 } from 'node:fs'
@@ -25,8 +26,18 @@ import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('..', import.meta.url))
 const DIST = join(root, 'dist')
 
-/** Must match `url` in src/site.config.ts. */
-const SITE_URL = 'https://beckshardwoodfloors.com'
+/**
+ * Must match `url` in src/site.config.ts — both read the same env override so a
+ * preview build cannot end up with canonicals on one host and a sitemap on
+ * another.
+ */
+const SITE_URL = (process.env.VITE_SITE_URL || 'https://beckshardwoodfloors.com').replace(
+  /\/$/,
+  ''
+)
+
+/** Preview builds are not indexable, so they get no sitemap at all. */
+const NOINDEX = process.env.VITE_NOINDEX === '1'
 
 /** Relative priority. Home first, money pages next, everything else after. */
 const PRIORITY = {
@@ -70,6 +81,37 @@ const routes = ['/', ...collectRoutes(DIST)]
 
 const today = new Date().toISOString().slice(0, 10)
 
+if (NOINDEX) {
+  // Belt and braces. The noindex meta tag on every page is what actually gets
+  // the URL dropped from an index, and a robots.txt Disallow would stop a
+  // crawler ever fetching the page to see it — so this emits BOTH the
+  // machine-readable block and an X-Robots-Tag header via .htaccess, and
+  // deliberately writes no sitemap.
+  writeFileSync(
+    join(DIST, 'robots.txt'),
+    `# PREVIEW BUILD — NOT FOR PUBLIC INDEXING\nUser-agent: *\nDisallow: /\n`
+  )
+
+  const htaccessPath = join(DIST, '.htaccess')
+  if (existsSync(htaccessPath)) {
+    const current = readFileSync(htaccessPath, 'utf8')
+    writeFileSync(
+      htaccessPath,
+      `# ── PREVIEW BUILD ───────────────────────────────────────────────────\n` +
+        `# Injected by scripts/generate-sitemap.mjs because VITE_NOINDEX=1.\n` +
+        `# Remove this block (or rebuild without VITE_NOINDEX) before going live.\n` +
+        `<IfModule mod_headers.c>\n` +
+        `  Header always set X-Robots-Tag "noindex, nofollow"\n` +
+        `</IfModule>\n\n` +
+        current
+    )
+  }
+
+  console.log('PREVIEW BUILD: noindex meta on every page, X-Robots-Tag header')
+  console.log('               robots.txt disallows all, no sitemap written')
+  console.log(`               canonical origin: ${SITE_URL}`)
+} else {
+
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${routes
@@ -95,8 +137,12 @@ Sitemap: ${SITE_URL}/sitemap.xml
 
 writeFileSync(join(DIST, 'robots.txt'), robots)
 
+  console.log(`sitemap.xml written with ${routes.length} URLs:`)
+  for (const r of routes) console.log(`  ${SITE_URL}${r}`)
+}
+
 // Apache's `ErrorDocument 404 /404.html` needs a real file at that exact path,
-// but the SSG emits dist/404/index.html. Copy it up.
+// but the SSG emits dist/404/index.html. Copy it up. Needed in both build modes.
 const notFoundSrc = join(DIST, '404', 'index.html')
 if (existsSync(notFoundSrc)) {
   copyFileSync(notFoundSrc, join(DIST, '404.html'))
@@ -104,6 +150,3 @@ if (existsSync(notFoundSrc)) {
 } else {
   console.warn('WARNING: no dist/404/index.html — ErrorDocument will not work.')
 }
-
-console.log(`sitemap.xml written with ${routes.length} URLs:`)
-for (const r of routes) console.log(`  ${SITE_URL}${r}`)

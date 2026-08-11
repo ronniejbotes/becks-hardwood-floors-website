@@ -21,3 +21,7 @@ npm-debug.log*
 # builds and deploys correctly without this directory.
 # Once real client photos land, decide deliberately whether to track them.
 media-src/
+
+# Preview build output + upload bundle (regenerate with `npm run build:preview`)
+dist-preview/
+becks-preview.zip

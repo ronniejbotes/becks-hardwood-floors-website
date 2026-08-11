@@ -25,12 +25,21 @@ export default function Seo({
   const canonical = absUrl(path)
   const ogImage = image.startsWith('http') ? image : absUrl(image)
 
+  // site.noindex is the build-wide switch for preview deploys; the `noindex`
+  // prop is the per-page one (the 404). Either turns it on.
+  const blockIndexing = site.noindex || noindex
+
   return (
     <Head>
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={canonical} />
-      {noindex && <meta name="robots" content="noindex, follow" />}
+      {blockIndexing && (
+        <meta
+          name="robots"
+          content={site.noindex ? 'noindex, nofollow' : 'noindex, follow'}
+        />
+      )}
 
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content={site.name} />

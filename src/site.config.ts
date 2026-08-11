@@ -49,9 +49,29 @@ export const site = {
     },
   },
 
-  /** Production domain. Update once the real domain is registered, then
-   *  re-run `npm run build` so canonicals and the sitemap pick it up. */
-  url: 'https://beckshardwoodfloors.com',
+  /**
+   * Canonical origin. Every canonical tag, og:url and schema @id is built from
+   * this, so it MUST match the host the files are actually served from.
+   *
+   * Override at build time for preview deploys:
+   *   VITE_SITE_URL=https://lightcyan-curlew-520407.hostingersite.com npm run build
+   *
+   * Or just use `npm run build:preview`, which also sets VITE_NOINDEX.
+   */
+  url:
+    (import.meta.env?.VITE_SITE_URL as string | undefined)?.replace(/\/$/, '') ||
+    'https://beckshardwoodfloors.com',
+
+  /**
+   * When true every page emits `noindex, nofollow` and no sitemap is written.
+   *
+   * This is not optional housekeeping for a preview build. A demo site for an
+   * unsold client, indexed on a hostingersite.com subdomain, means: a duplicate
+   * of the real site competing with it later, a client's business name ranking
+   * on a URL nobody controls long-term, and AI-generated placeholder photos
+   * publicly attributed to a real contractor. Keep it on for every preview.
+   */
+  noindex: import.meta.env?.VITE_NOINDEX === '1',
 
   phone: {
     display: '(336) 764-2395', // [GBP] and [BBB]
