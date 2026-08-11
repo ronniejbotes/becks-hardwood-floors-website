@@ -7,12 +7,12 @@ name: Deploy to Hostinger over FTP (alternative)
 #   this workflow              builds -> uploads straight to public_html over
 #                              FTP, fully automatic, no hPanel click.
 #
-# Manual-trigger only, because it would fail on every push until FTP_SERVER,
-# FTP_USERNAME and FTP_PASSWORD are set. To switch to this method, add those
-# three secrets and uncomment the `push:` trigger below.
+# Needs FTP_SERVER, FTP_USERNAME and FTP_PASSWORD as repository secrets
+# (hPanel -> Files -> FTP Accounts). Until those exist the job fails fast with
+# a clear message rather than half-uploading.
 on:
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 # Never let two deploys upload over each other.
@@ -24,6 +24,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Check FTP credentials are configured
+        run: |
+          missing=""
+          [ -n "${{ secrets.FTP_SERVER }}"   ] || missing="$missing FTP_SERVER"
+          [ -n "${{ secrets.FTP_USERNAME }}" ] || missing="$missing FTP_USERNAME"
+          [ -n "${{ secrets.FTP_PASSWORD }}" ] || missing="$missing FTP_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secret(s):$missing"
+            echo "Add them under Settings -> Secrets and variables -> Actions -> Secrets."
+            echo "Values come from hPanel -> Files -> FTP Accounts."
+            exit 1
+          fi
+          echo "All three FTP secrets present."
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
