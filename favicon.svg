@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Beck's Hardwood Floors">
+  <rect width="64" height="64" rx="14" fill="#241C17"/>
+  <!-- Three board runs in oak tones, suggesting a floor in perspective. -->
+  <rect x="10" y="20" width="44" height="7" rx="2" fill="#D9A167"/>
+  <rect x="10" y="30" width="44" height="7" rx="2" fill="#B0692B"/>
+  <rect x="10" y="40" width="44" height="7" rx="2" fill="#8A4E1B"/>
+</svg>
