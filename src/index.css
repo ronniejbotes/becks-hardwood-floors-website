@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --paper: #fbf8f4;
+    --ink: #1c1714;
+    --oak: #b0692b;
+    /* Set by Header.tsx so sections can offset scroll for the sticky bar. */
+    --header-h: 76px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html,
+  body,
+  #root {
+    margin: 0;
+    padding: 0;
+    background-color: var(--paper);
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color: var(--ink);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Anchor targets clear the sticky header instead of hiding underneath it. */
+  [id] {
+    scroll-margin-top: calc(var(--header-h) + 16px);
+  }
+
+  /* Visible, on-brand focus ring. Never remove it — trades sites get a lot of
+     keyboard and screen-reader traffic from older visitors. */
+  :focus-visible {
+    outline: 3px solid var(--oak);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: #f0d9bd;
+    color: var(--ink);
+  }
+}
+
+@layer components {
+  /* Fluid display heading. clamp() keeps one rule working from 320px to 4K. */
+  .h-display {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    font-variation-settings: 'SOFT' 20, 'WONK' 1;
+  }
+
+  .h-section {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    font-variation-settings: 'SOFT' 20, 'WONK' 1;
+  }
+
+  /* Thin rule used to separate list rows and sections. */
+  .rule {
+    border-color: rgba(28, 23, 20, 0.12);
+  }
+
+  .rule-invert {
+    border-color: rgba(251, 248, 244, 0.16);
+  }
+
+  .shell {
+    width: 100%;
+    margin-inline: auto;
+    max-width: 1280px;
+    padding-inline: 20px;
+  }
+
+  @media (min-width: 768px) {
+    .shell {
+      padding-inline: 40px;
+    }
+  }
+
+  /* Body copy inside long-form service pages. */
+  .copy p {
+    max-width: 68ch;
+    line-height: 1.7;
+  }
+
+  /* Comparison tables must be real <table> markup to be machine-extractable,
+     which means they need an explicit horizontal scroll container on mobile. */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

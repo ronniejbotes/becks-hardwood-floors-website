@@ -1,0 +1,23 @@
+node_modules
+dist
+dist-ssr
+.env
+.env.local
+.env.*.local
+*.local
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.log
+npm-debug.log*
+.cache
+.temp
+
+# Source media for scripts/optimize-media.mjs.
+# Currently ~80 MB of disposable AI-generated placeholders that will be replaced
+# with Travis's real photographs, so they are not worth committing. The
+# OPTIMISED, SERVED versions in public/media/ ARE committed, so a fresh clone
+# builds and deploys correctly without this directory.
+# Once real client photos land, decide deliberately whether to track them.
+media-src/

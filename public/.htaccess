@@ -1,0 +1,75 @@
+# Beck's Hardwood Floors — Apache config for Hostinger shared hosting.
+# Copied into dist/ by Vite and served from the site root.
+
+# ── Canonical host: force HTTPS and a single www / non-www form ──────────────
+# Search engines treat http://, https://, www. and non-www as four different
+# sites unless they are collapsed into one. Pick ONE and redirect the rest.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS.
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Force non-www. If you prefer www, comment this block out and uncomment the
+  # one below instead — but only ever run one of them.
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+
+  # Force www (alternative — leave commented unless you swap the rule above).
+  # RewriteCond %{HTTP_HOST} !^www\. [NC]
+  # RewriteRule ^ https://www.%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Serve /page/ from /page/index.html. The build emits real directories, so no
+  # SPA catch-all rewrite is needed or wanted — a catch-all would return 200 for
+  # URLs that should 404, which pollutes the index.
+  DirectoryIndex index.html
+</IfModule>
+
+ErrorDocument 404 /404.html
+
+# ── Compression ──────────────────────────────────────────────────────────────
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+  AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+  AddOutputFilterByType DEFLATE application/json application/xml
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ── Caching ──────────────────────────────────────────────────────────────────
+# Hashed assets are immutable and cached for a year. HTML must revalidate, or
+# visitors keep seeing an old build after a deploy.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg                "access plus 1 year"
+  ExpiresByType image/png                 "access plus 1 year"
+  ExpiresByType image/webp                "access plus 1 year"
+  ExpiresByType image/svg+xml             "access plus 1 year"
+  ExpiresByType video/mp4                 "access plus 1 year"
+  ExpiresByType text/css                  "access plus 1 year"
+  ExpiresByType application/javascript    "access plus 1 year"
+  ExpiresByType text/html                 "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|woff2|jpg|jpeg|png|webp|svg|mp4)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+
+  # Baseline security headers.
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# ── MIME types ───────────────────────────────────────────────────────────────
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType image/svg+xml .svg
+  AddType video/mp4 .mp4
+</IfModule>

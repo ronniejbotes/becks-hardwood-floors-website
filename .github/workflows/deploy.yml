@@ -1,0 +1,58 @@
+name: Build and deploy to Hostinger
+
+on:
+  push:
+    branches: [main]
+  # Lets you re-deploy from the Actions tab without pushing a commit.
+  workflow_dispatch:
+
+# Never let two deploys upload over each other.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        env:
+          # Set under Settings -> Secrets and variables -> Actions.
+          # Without it the built form disables itself and says so, rather than
+          # silently dropping enquiries.
+          VITE_W3F_KEY: ${{ secrets.VITE_W3F_KEY }}
+        run: npm run build
+
+      - name: Fail if the build produced nothing
+        run: |
+          test -f dist/index.html || { echo "dist/index.html missing"; exit 1; }
+          test -f dist/sitemap.xml || { echo "sitemap.xml missing"; exit 1; }
+          test -f dist/.htaccess || { echo ".htaccess missing from dist"; exit 1; }
+          echo "Build output looks sane:"
+          find dist -maxdepth 2 -name index.html | sort
+
+      - name: Upload to Hostinger over FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
+          # Change this if the site is on an addon domain rather than the
+          # primary one, e.g. ./domains/example.com/public_html/
+          server-dir: ./public_html/
+          # dangerous-clean-slate would wipe the remote first. Left off so a
+          # failed upload cannot take the live site down with it.
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
